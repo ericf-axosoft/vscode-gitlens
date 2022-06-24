@@ -1,32 +1,40 @@
 import React, { useEffect, useState } from 'react';
+import { CommitListCallback, GitCommit, State } from '../../graph/protocol';
 
-export interface GraphWrapperProps {
-    subscriber: (callback: (data: unknown[]) => void) => void;
-    data: unknown[];
+export interface GraphWrapperProps extends State {
+    subscriber: (callback: CommitListCallback) => () => void;
 }
 
-const getGraphModel = (data: unknown[]) => data;
+// TODO: this needs to be replaced with a function from the Graph repo
+const getGraphModel = (data: GitCommit[]) => data;
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export function GraphWrapper({ subscriber, data }: GraphWrapperProps) {
-    const [count, setCount] = useState(0);
-    const [graphList, setGraphList] = useState<unknown[]>(getGraphModel(data));
+export function GraphWrapper({ subscriber, commits, repositories, selectedRepository }: GraphWrapperProps) {
+    const [graphList, setGraphList] = useState(getGraphModel(commits));
+    const [reposList, setReposList] = useState(repositories);
+    const [currentRepository, setCurrentRepository] = useState(selectedRepository);
 
-    function transformData(newData: unknown[]) {
-        setGraphList(getGraphModel(newData));
+    function transformData(state: State) {
+        setGraphList(getGraphModel(state.commits));
+        setReposList(state.repositories);
+        setCurrentRepository(state.selectedRepository);
     }
 
     useEffect(() => {
+        if (subscriber === undefined) {
+            return;
+        }
         return subscriber(transformData);
-    });
+    }, []);
 
     return (
-        <div>
-            <p>This is the graph wrapper. Counter: {count}</p>
-            <button type="button" onClick={() => setCount(count + 1)}>Increment</button>
+        <>
             <ul>
-                {graphList.map((item, index) => (<li key={index}>{JSON.stringify(item)}</li>))}
+                {reposList.length ? reposList.map((item, index) => (<li key={`repos-${index}`}>{JSON.stringify(item)}</li>)) : (<li>No repos</li>)}
             </ul>
-        </div>
+            <ul>
+                {graphList.length ? graphList.map((item, index) => (<li key={`commits-${index}`}>{JSON.stringify(item)}</li>)) : (<li>No commits</li>)}
+            </ul>
+        </>
     );
 }

@@ -1,12 +1,14 @@
 /*global*/
 import React from 'react';
 import { render, unmountComponentAtNode } from 'react-dom';
-import { State } from '../../graph/protocol';
+import { CommitListCallback, State } from '../../graph/protocol';
 import { App } from '../shared/appBase';
 import { GraphWrapper } from './GraphWrapper';
 import './graph.scss';
 
 export class GraphApp extends App<State> {
+	private callback?: CommitListCallback;
+
 	constructor() {
 		super('GraphApp');
 	}
@@ -17,7 +19,7 @@ export class GraphApp extends App<State> {
 		const $root = document.getElementById('root');
 		if ($root != null) {
 			render(
-				<GraphWrapper subscriber={this.registerEvents} data={this.state.commits} />,
+				<GraphWrapper subscriber={(callback: CommitListCallback) => this.registerEvents(callback)} {...this.state} />,
 				$root
 			);
 			disposables.push({
@@ -28,8 +30,17 @@ export class GraphApp extends App<State> {
 		return disposables;
 	}
 
-	registerEvents(callback: (data: unknown[]) => void): () => void {
-		return () => {};
+
+	protected override onMessageReceived(e: MessageEvent) {
+		console.log('onMessageReceived', e);
+	}
+
+	registerEvents(callback: CommitListCallback): () => void {
+		this.callback = callback;
+
+		return () => {
+			this.callback = undefined;
+		};
 	}
 }
 
