@@ -67,10 +67,12 @@ export class GraphWebview extends WebviewBase<State> {
 }
 
 function formatCommits(commits: GitCommit[]): GitCommit[] {
-	return commits.map(({ sha, author, message }) => ({
+	return commits.map(({ sha, author, message, parents, committer }) => ({
 		sha: sha,
 		author: author,
-		message: message
+		message: message,
+		parents: parents,
+		committer: committer
 	}));
 }
 
