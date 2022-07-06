@@ -5,6 +5,7 @@ export interface State {
     repositories: Repository[];
     selectedRepository?: string;
     commits: GitCommit[];
+    nonce?: string;
 }
 
 export interface CommitListCallback {

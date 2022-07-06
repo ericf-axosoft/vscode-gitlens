@@ -4,6 +4,7 @@ import * as React from 'react';
 interface GKProps {
   rows?: GraphRow[];
   repoPath?: string;
+  nonce?: string;
 }
 
 interface GKState {
@@ -38,6 +39,10 @@ export class GKGraph extends React.Component<GKProps, GKState> {
 
   override render(): JSX.Element {
     const {
+      nonce
+    } = this.props;
+
+    const {
       rows,
       repoPath
     } = this.state;
@@ -48,6 +53,7 @@ export class GKGraph extends React.Component<GKProps, GKState> {
         <GraphContainer
           graphRows={rows}
           useAuthorInitialsForAvatars={false}
+          nonce={nonce}
         />
       </div>
     );
