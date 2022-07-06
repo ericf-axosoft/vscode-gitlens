@@ -7,12 +7,10 @@ export interface GraphWrapperProps extends State {
     subscriber: (callback: CommitListCallback) => () => void;
 }
 
-// TODO: this needs to be replaced with a function from the Graph repo
-// const getGraphModel = (data: GitCommit[]) => data;
 const getGraphModel = (gitCommits: GitCommit[]): GraphRow[] => {
     const graphRows: GraphRow[] = [];
 
-    for (const gitCommit of Object.values(gitCommits)) {
+    for (const gitCommit of gitCommits) {
         graphRows.push({
             sha: gitCommit.sha,
             parents: gitCommit.parents,
