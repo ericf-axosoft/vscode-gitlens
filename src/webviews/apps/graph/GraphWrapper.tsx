@@ -16,7 +16,7 @@ const getGraphModel = (gitCommits: GitCommit[]): GraphRow[] => {
             parents: gitCommit.parents,
             author: gitCommit.author.name,
             email: gitCommit.author.email,
-            date: new Date(gitCommit.committer.date).valueOf(),
+            date: new Date(gitCommit.committer.date).getTime(),
             message: gitCommit.message,
             type: 'commit-node'
         });
