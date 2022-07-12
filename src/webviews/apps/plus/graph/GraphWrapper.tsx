@@ -1,3 +1,4 @@
+import { GraphRow } from '@axosoft/gitkraken-components/lib/components/graph/GraphContainer';
 import React, { useEffect, useState } from 'react';
 import {
 	CommitListCallback,
@@ -6,6 +7,7 @@ import {
 	Repository,
 	State,
 } from '../../../../plus/webviews/graph/protocol';
+import { GKGraph } from './GKGraph';
 
 export interface GraphWrapperProps extends State {
 	subscriber: (callback: CommitListCallback) => () => void;
@@ -13,8 +15,25 @@ export interface GraphWrapperProps extends State {
 	onColumnChange?: (name: string, settings: GraphColumnConfig) => void;
 }
 
-// TODO: this needs to be replaced with a function from the Graph repo
-const getGraphModel = (data: GitCommit[] = []) => data;
+const getGraphModel = (gitCommits?: GitCommit[]): GraphRow[] => {
+    const graphRows: GraphRow[] = [];
+
+	if (gitCommits !== undefined) {
+		for (const gitCommit of gitCommits) {
+			graphRows.push({
+				sha: gitCommit.sha,
+				parents: gitCommit.parents,
+				author: gitCommit.author.name,
+				email: gitCommit.author.email,
+				date: new Date(gitCommit.committer.date).getTime(),
+				message: gitCommit.message,
+				type: 'commit-node'
+			});
+		}
+	}
+
+    return graphRows;
+};
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export function GraphWrapper({
@@ -23,6 +42,7 @@ export function GraphWrapper({
 	repositories = [],
 	selectedRepository,
 	config,
+	nonce,
 	onSelectRepository,
 	onColumnChange,
 }: GraphWrapperProps) {
@@ -51,9 +71,11 @@ export function GraphWrapper({
 		}
 	};
 
+	const graphRows: GraphRow[] = graphList;
+
 	return (
 		<>
-			<ul>
+			{/* <ul>
 				{reposList.length ? (
 					reposList.map((item, index) => (
 						<li onClick={() => handleSelectRepository(item)} key={`repos-${index}`}>
@@ -75,7 +97,8 @@ export function GraphWrapper({
 				</ul>
 			) : (
 				<p>No repository is selected</p>
-			)}
+			)} */}
+			<GKGraph rows={graphRows} repoPath={currentRepository} nonce={nonce} />
 		</>
 	);
 }

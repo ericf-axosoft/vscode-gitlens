@@ -5,6 +5,7 @@ export interface State {
 	selectedRepository?: string;
 	commits?: GitCommit[];
 	config?: GraphConfig;
+	nonce?: string;
 }
 
 export type Repository = Record<string, any>;
