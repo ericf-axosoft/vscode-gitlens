@@ -5,11 +5,17 @@ export interface State {
 	selectedRepository?: string;
 	commits?: GitCommit[];
 	config?: GraphConfig;
+	remotes?: GitRemote[],
+	tags?: GitTag[],
+	branches?: GitBranch[]
 	nonce?: string;
 }
 
 export type Repository = Record<string, any>;
 export type GitCommit = Record<string, any>;
+export type GitRemote = Record<string, any>;
+export type GitTag = Record<string, any>;
+export type GitBranch = Record<string, any>;
 
 export interface GraphColumnConfig {
 	width: number;

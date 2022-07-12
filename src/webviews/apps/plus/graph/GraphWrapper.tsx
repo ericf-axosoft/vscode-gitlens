@@ -2,7 +2,10 @@ import { GraphRow } from '@axosoft/gitkraken-components/lib/components/graph/Gra
 import React, { useEffect, useState } from 'react';
 import {
 	CommitListCallback,
+	GitBranch,
 	GitCommit,
+	GitRemote,
+	GitTag,
 	GraphColumnConfig,
 	Repository,
 	State,
@@ -15,21 +18,63 @@ export interface GraphWrapperProps extends State {
 	onColumnChange?: (name: string, settings: GraphColumnConfig) => void;
 }
 
-const getGraphModel = (gitCommits?: GitCommit[]): GraphRow[] => {
+const getGraphModel = (
+	gitCommits: GitCommit[] = [],
+	gitRemotes: GitRemote[] = [],
+	gitTags: GitTag[] = [],
+	gitBranches: GitBranch[] = []
+): GraphRow[] => {
     const graphRows: GraphRow[] = [];
 
-	if (gitCommits !== undefined) {
-		for (const gitCommit of gitCommits) {
-			graphRows.push({
-				sha: gitCommit.sha,
-				parents: gitCommit.parents,
-				author: gitCommit.author.name,
-				email: gitCommit.author.email,
-				date: new Date(gitCommit.committer.date).getTime(),
-				message: gitCommit.message,
-				type: 'commit-node'
-			});
+	// console.log('gitRemotes -> ', gitRemotes);
+	// console.log('gitTags -> ', gitTags);
+	// console.log('gitBranches -> ', gitBranches);
+
+	for (const gitCommit of gitCommits) {
+		// TODO: finish code logic to retrieve branches, tags and remotes for th GK graph
+		const commitBranch = gitBranches.find(b => b.sha === gitCommit.sha);
+		let branchInfo = {} as any;
+		if (commitBranch != null) {
+			branchInfo = {
+				remotes: [
+					{
+						name: commitBranch.name,
+						url: commitBranch.id
+					}
+				]
+			};
+			if (commitBranch.current) {
+				branchInfo.heads = [
+					{
+						name: commitBranch.name,
+						isCurrentHead: true
+					}
+				];
+			}
 		}
+		const commitTag = gitTags.find(t => t.sha === gitCommit.sha);
+		let tagInfo = {} as any;
+		if (commitTag != null) {
+			tagInfo = {
+				tags: [
+					{
+						name: commitTag.name,
+					}
+				]
+			};
+		}
+
+		graphRows.push({
+			sha: gitCommit.sha,
+			parents: gitCommit.parents,
+			author: gitCommit.author.name,
+			email: gitCommit.author.email,
+			date: new Date(gitCommit.committer.date).getTime(),
+			message: gitCommit.message,
+			type: 'commit-node',
+			...branchInfo,
+			...tagInfo
+		});
 	}
 
     return graphRows;
@@ -40,19 +85,22 @@ export function GraphWrapper({
 	subscriber,
 	commits = [],
 	repositories = [],
+	remotes = [],
+	tags = [],
+	branches = [],
 	selectedRepository,
 	config,
 	nonce,
 	onSelectRepository,
 	onColumnChange,
 }: GraphWrapperProps) {
-	const [graphList, setGraphList] = useState(getGraphModel(commits));
+	const [graphList, setGraphList] = useState(getGraphModel(commits, remotes, tags, branches));
 	const [reposList, setReposList] = useState(repositories);
 	const [currentRepository, setCurrentRepository] = useState(selectedRepository);
 	const [settings, setSettings] = useState(config);
 
 	function transformData(state: State) {
-		setGraphList(getGraphModel(state.commits));
+		setGraphList(getGraphModel(state.commits, state.remotes, state.tags, state.branches));
 		setReposList(state.repositories ?? []);
 		setCurrentRepository(state.selectedRepository);
 		setSettings(state.config);
