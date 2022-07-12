@@ -5,7 +5,7 @@ import type { Container } from '../../../container';
 import { RepositoryPicker } from '../../../quickpicks/repositoryPicker';
 import { WebviewWithConfigBase } from '../../../webviews/webviewWithConfigBase';
 import { ensurePlusFeaturesEnabled } from '../../subscription/utils';
-import type { GitCommit, Repository, State } from './protocol';
+import type { GitBranch, GitCommit, GitRemote, GitTag, Repository, State } from './protocol';
 
 export class GraphWebview extends WebviewWithConfigBase<State> {
 	private selectedRepository?: string;
@@ -39,6 +39,60 @@ export class GraphWebview extends WebviewWithConfigBase<State> {
 		}
 
 		return Array.from(log.commits.values());
+	}
+
+	private async getRemotes(repo?: string | Repository): Promise<GitRemote[]> {
+		if (repo === undefined) {
+			return [];
+		}
+
+		const repository = typeof repo === 'string' ? this.container.git.getRepository(repo) : repo;
+		if (repository === undefined) {
+			return [];
+		}
+
+		const remotes = await this.container.git.getRemotes(repository.uri);
+		if (remotes === undefined) {
+			return [];
+		}
+
+		return Array.from(remotes.values());
+	}
+
+	private async getTags(repo?: string | Repository): Promise<GitTag[]> {
+		if (repo === undefined) {
+			return [];
+		}
+
+		const repository = typeof repo === 'string' ? this.container.git.getRepository(repo) : repo;
+		if (repository === undefined) {
+			return [];
+		}
+
+		const tags = await this.container.git.getTags(repository.uri);
+		if (tags === undefined) {
+			return [];
+		}
+
+		return Array.from(tags.values);
+	}
+
+	private async getBranches(repo?: string | Repository): Promise<GitBranch[]> {
+		if (repo === undefined) {
+			return [];
+		}
+
+		const repository = typeof repo === 'string' ? this.container.git.getRepository(repo) : repo;
+		if (repository === undefined) {
+			return [];
+		}
+
+		const branches = await this.container.git.getBranches(repository.uri);
+		if (branches === undefined) {
+			return [];
+		}
+
+		return Array.from(branches.values);
 	}
 
 	private async pickRepository(repositories: Repository[]): Promise<Repository | undefined> {
@@ -78,13 +132,22 @@ export class GraphWebview extends WebviewWithConfigBase<State> {
 			this.selectedRepository = idealRepo?.path;
 		}
 
-		const commits = await this.getCommits(this.selectedRepository);
+		const [commits, remotes, tags, branches] = await Promise.all([
+			this.getCommits(this.selectedRepository),
+			this.getRemotes(this.selectedRepository),
+			this.getTags(this.selectedRepository),
+			this.getBranches(this.selectedRepository)
+		]);
 
 		return {
 			repositories: formatRepositories(repositories),
 			selectedRepository: this.selectedRepository,
 			commits: formatCommits(commits),
+			remotes: remotes,
+			branches: branches,
+			tags: tags,
 			config: this.getConfig(),
+			nonce: super.getCSPNonce()
 		};
 	}
 
@@ -94,10 +157,12 @@ export class GraphWebview extends WebviewWithConfigBase<State> {
 }
 
 function formatCommits(commits: GitCommit[]): GitCommit[] {
-	return commits.map(({ sha, author, message }) => ({
+	return commits.map(({ sha, author, message, parents, committer }) => ({
 		sha: sha,
 		author: author,
 		message: message,
+		parents: parents,
+		committer: committer
 	}));
 }
 
